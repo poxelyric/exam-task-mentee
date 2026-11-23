@@ -18,4 +18,4 @@ USER 10001:10001
 
 ENV PORT=8080
 
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:$PORT", "--access-logfile", "-", "--error-logfile", "-", "app.app:application"]
+CMD gunicorn --workers 2 --bind 0.0.0.0:${PORT} --access-logfile - --error-logfile - app.app:application
