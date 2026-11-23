@@ -1,7 +1,11 @@
 import os
-from wsgiref.simple_server import make_server
 
-from .version import APP_VERSION
+from flask import Flask, Response
+
+from version import APP_VERSION
+
+
+app = Flask(__name__)
 
 
 LANDING_PAGE = """<!doctype html>
@@ -144,47 +148,42 @@ LANDING_PAGE = """<!doctype html>
 """
 
 
-def application(environ, start_response):
-    method = environ.get("REQUEST_METHOD", "GET")
-    path = environ.get("PATH_INFO", "/")
+@app.get("/")
+def landing_page():
+    return Response(
+        LANDING_PAGE.replace("__APP_VERSION__", APP_VERSION),
+        mimetype="text/html",
+    )
 
-    if path == "/health" and method in {"GET", "HEAD"}:
-        status = "200 OK"
-        body = b"ok\n"
-        content_type = "text/plain; charset=utf-8"
-    elif path == "/" and method in {"GET", "HEAD"}:
-        status = "200 OK"
-        body = LANDING_PAGE.replace("__APP_VERSION__", APP_VERSION).encode("utf-8")
-        content_type = "text/html; charset=utf-8"
-    elif path not in {"/", "/health"}:
-        status = "404 Not Found"
-        body = b"Page not found\n"
-        content_type = "text/plain; charset=utf-8"
-    else:
-        status = "405 Method Not Allowed"
-        body = b"Method not allowed\n"
-        content_type = "text/plain; charset=utf-8"
 
-    headers = [
-        ("Content-Type", content_type),
-        ("Content-Length", str(len(body))),
-    ]
-    if status == "405 Method Not Allowed":
-        headers.append(("Allow", "GET, HEAD"))
-    start_response(status, headers)
-    return [b"" if method == "HEAD" else body]
+@app.get("/health")
+def health():
+    return Response("ok\n", mimetype="text/plain")
+
+
+@app.errorhandler(404)
+def not_found(_error):
+    return Response("Page not found\n", status=404, mimetype="text/plain")
+
+
+@app.errorhandler(405)
+def method_not_allowed(_error):
+    return Response(
+        "Method not allowed\n",
+        status=405,
+        headers={"Allow": "GET, HEAD"},
+        mimetype="text/plain",
+    )
+
+
+# Keep the previous WSGI entry-point name available for existing deployments.
+application = app
 
 
 def main():
     port = int(os.environ.get("PORT", "8000"))
-    server = make_server("0.0.0.0", port, application)
     print(f"Mentee Robotics landing page v{APP_VERSION} listening on port {port}")
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nShutting down Mentee Robotics web app.")
-    finally:
-        server.server_close()
+    app.run(host="0.0.0.0", port=port)
 
 
 if __name__ == "__main__":
