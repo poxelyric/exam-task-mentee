@@ -20,7 +20,7 @@
     }
   ],
   "family": "sample-fargate",
-  "executionRoleArn": "arn:aws:iam::030454160336:role/exam-role",
+  "executionRoleArn": "arn:aws:iam::030454160336:role/exam-oriecsTaskExecutionRole",
   "networkMode": "awsvpc",
   "volumes": [],
   "placementConstraints": [],
