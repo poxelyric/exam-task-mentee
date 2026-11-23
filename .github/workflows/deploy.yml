@@ -16,6 +16,9 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
 
     steps:
       - name: Configure AWS Credentials
@@ -31,8 +34,6 @@ jobs:
         uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.17.2"
-
-      - run: cd terraform
       
       - run: terraform init
 
