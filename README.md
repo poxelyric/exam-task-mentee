@@ -5,6 +5,8 @@ Connect github actions aws using oidc
 
 To deploy the app to aws I wanted to use terraform for IaC
 
+use s3 bucket as terraform backend
+
 deploy the app on ecs for simplicity
 
 In order to allow for rollback only changes to app code change the app version and the IaC can reference an older image tag.
