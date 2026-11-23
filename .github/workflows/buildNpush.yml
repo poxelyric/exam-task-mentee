@@ -2,8 +2,8 @@ name: build and push
 
 permissions:
   id-token: write
-  contents: read
-
+  contents: write
+  actions: write
 on:
   workflow_dispatch:
   push:
