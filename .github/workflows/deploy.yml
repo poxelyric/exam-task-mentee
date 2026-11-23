@@ -1,0 +1,38 @@
+name: Deploy to AWS
+
+permissions:
+  id-token: write
+  contents: write
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: oidc-debugger-action
+        # You may pin to the exact commit or the version.
+        # uses: steve-todorov/oidc-debugger-action@b6d83b24a379e77233fb6b26f1c1a662c4bf443c
+        uses: steve-todorov/oidc-debugger-action@v1.0.2
+        with:
+          # The audience to use when requesting the JWT. Your Github server URL and repository owner (e.g. https://github.com/github).
+          audience: sts.amazonaws.com # default is ${{ github.server_url }}/${{ github.repository }}
+          
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.ROLE_ARN }}
+          aws-region: ${{ vars.REGION }}
+      
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
