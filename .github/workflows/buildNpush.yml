@@ -67,9 +67,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       
+      - uses: SebRollen/toml-action@v1.2.0
+        id: read_toml
+        with:
+          file: 'pyproject.toml'
+          field: 'project.version'
+      
       - uses: rickstaa/action-create-tag@v1
         id: "tag_create"
         with:
-          tag: "latest"
+          tag: "v${{ steps.read_toml.outputs.value }}"
           tag_exists_error: false
-          message: "Latest release"
+          message: "${{ steps.read_toml.outputs.value }} version"
