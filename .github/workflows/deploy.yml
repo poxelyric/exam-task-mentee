@@ -6,9 +6,12 @@ permissions:
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
+    # paths:
+    #   - 'app/**'
+    #   - 'terraform/**'
 jobs:
   deploy:
     name: Deploy

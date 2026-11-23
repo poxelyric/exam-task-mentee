@@ -11,6 +11,8 @@ deploy the app on ecs for simplicity
 
 In order to allow for rollback only changes to app code change the app version and the IaC can reference an older image tag.
 
+perhaps seperate the workflows into deploy and build: build whenever an app change and deploy when app changes or terraform changes
+
 ## What went wrong
 
 I underestimated the time it would take to write a terraform configuration and started lookng for simpler alternatives when I realized I don't have time.
