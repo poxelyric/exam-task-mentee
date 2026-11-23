@@ -16,9 +16,6 @@ RUN addgroup --system --gid 10001 app \
 
 USER 10001:10001
 
-EXPOSE 80
+ENV PORT=8080
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).read()"
-
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:8080", "--access-logfile", "-", "--error-logfile", "-", "app.app:application"]
+CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:$PORT", "--access-logfile", "-", "--error-logfile", "-", "app.app:application"]
