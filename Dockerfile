@@ -19,6 +19,6 @@ USER 10001:10001
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/health', timeout=2).read()"
 
 CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:80", "--access-logfile", "-", "--error-logfile", "-", "app.app:application"]
