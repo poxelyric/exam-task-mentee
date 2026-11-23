@@ -1,0 +1,5 @@
+[project]
+name = "menteerobotics"
+version = "1.0.1"
+description = "Mentee Robotics landing page"
+requires-python = ">=3.11"
