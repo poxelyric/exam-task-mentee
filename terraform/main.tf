@@ -1,45 +1,12 @@
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-}
-
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
-  }
-}
-
-resource "aws_subnet" "public" {
-  count                   = 2
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index + 10)
-  availability_zone       = data.aws_availability_zones.available.names[count.index]
-  map_public_ip_on_launch = true
-}
-
-resource "aws_route_table_association" "public" {
-  count          = length(aws_subnet.public)
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.public.id
+provider "aws" {
+  region = "${var.aws_region}"
 }
 
 module "ecs" {
   source  = "terraform-aws-modules/ecs/aws"
   version = "7.6.3"
 
-  cluster_name = "my-cluster"
+  cluster_name = "${var.cluster_name}"
 
   services = {
     my-service = {
@@ -48,27 +15,34 @@ module "ecs" {
 
       container_definitions = {
         app = {
-          enable_cloudwatch_logging = false
           essential = true
           image     = "${var.image}"
           portMappings = [
             {
-              containerPort = 8000
+              containerPort = var.container_port
               protocol      = "tcp"
             }
           ]
         }
       }
 
-      subnet_ids       = aws_subnet.public[*].id
-      assign_public_ip = true
+      load_balancer = {
+        service = {
+          target_group_arn = aws_lb_target_group.app.arn
+          container_name   = "app"
+          container_port   = var.container_port
+        }
+      }
+
+      subnet_ids       = aws_subnet.private[*].id
+      assign_public_ip = false
 
       security_group_ingress_rules = {
-        port_8000 = {
-          from_port   = 8000
-          to_port     = 8000
-          ip_protocol = "tcp"
-          cidr_ipv4   = "0.0.0.0/0"
+        alb_access = {
+          from_port                    = var.container_port
+          to_port                      = var.container_port
+          ip_protocol                  = "tcp"
+          referenced_security_group_id = aws_security_group.alb.id
         }
       }
 
