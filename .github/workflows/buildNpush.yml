@@ -4,6 +4,7 @@ permissions:
   id-token: write
   contents: write
   actions: write
+
 on:
   workflow_dispatch:
   push:
@@ -11,7 +12,8 @@ on:
       - main
     paths:
       - 'app/**'
-      - 'pyproject.toml'
+      - 'Dockerfile'
+
 jobs:
   build:
     name: build
@@ -21,13 +23,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: oidc-debugger-action
-        # You may pin to the exact commit or the version.
-        # uses: steve-todorov/oidc-debugger-action@b6d83b24a379e77233fb6b26f1c1a662c4bf443c
-        uses: steve-todorov/oidc-debugger-action@v1.0.2
-        with:
-          # The audience to use when requesting the JWT. Your Github server URL and repository owner (e.g. https://github.com/github).
-          audience: sts.amazonaws.com # default is ${{ github.server_url }}/${{ github.repository }}
+      # - name: oidc-debugger-action
+      #   # You may pin to the exact commit or the version.
+      #   # uses: steve-todorov/oidc-debugger-action@b6d83b24a379e77233fb6b26f1c1a662c4bf443c
+      #   uses: steve-todorov/oidc-debugger-action@v1.0.2
+      #   with:
+      #     # The audience to use when requesting the JWT. Your Github server URL and repository owner (e.g. https://github.com/github).
+      #     audience: sts.amazonaws.com # default is ${{ github.server_url }}/${{ github.repository }}
           
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6.3.0
@@ -40,42 +42,65 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
 
-      # - name: Calculate next semantic version
-      #   id: semver
-      #   uses: paulhatch/semantic-version@v5.4.0
+      # - name: Check changed files
+      #   uses: dorny/paths-filter@v3
+      #   id: filter
       #   with:
-      #     tag_prefix: "v"
+      #     filters: |
+      #       docker:
+      #         - 'dockerfile'
+      #       app:
+      #         - 'app/**'
+
+      - name: bump minor version if only dockerfile changed
+        id: bump-version
+        uses: bitshifted/git-auto-semver@v2.0.11
+        with:
+          main_branch: improve
+          create_tag: true
+          initial_version: 0.0.0
+      #     manual_bump: minor
+      #   if: steps.filter.outputs.app == 'false'
+      
+      # - name: Bump version and push tag if app changed
+      #   uses: bitshifted/git-auto-semver@v2.0.11
+      #   with:
+      #     create_tag: true
+      #     initial_version: 0.0.0
+      #     manual_bump: minor
+      #   if: steps.filter.outputs.app == 'true'
+
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ steps.bump-version.outputs.version-string }}
           ECR_REPOSITORY: ${{ vars.REPOSITORY }}
         run: |
           # Build a docker container and
           # push it to ECR so that it can
           # be deployed to ECS.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg APP_VERSION=$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  tag:
-    name: tag
-    runs-on: ubuntu-latest
+  # tag:
+  #   name: tag
+  #   runs-on: ubuntu-latest
     
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v6
       
-      - uses: SebRollen/toml-action@v1.2.0
-        id: read_toml
-        with:
-          file: 'pyproject.toml'
-          field: 'project.version'
+  #     - uses: SebRollen/toml-action@v1.2.0
+  #       id: read_toml
+  #       with:
+  #         file: 'pyproject.toml'
+  #         field: 'project.version'
       
-      - uses: rickstaa/action-create-tag@v1
-        id: "tag_create"
-        with:
-          tag: "v${{ steps.read_toml.outputs.value }}"
-          tag_exists_error: false
-          message: "${{ steps.read_toml.outputs.value }} version"
+  #     - uses: rickstaa/action-create-tag@v1
+  #       id: "tag_create"
+  #       with:
+  #         tag: "v${{ steps.read_toml.outputs.value }}"
+  #         tag_exists_error: false
+  #         message: "${{ steps.read_toml.outputs.value }} version"

@@ -2,7 +2,7 @@ import os
 
 from flask import Flask, Response
 
-from version import APP_VERSION
+APP_VERSION= os.environ.get("APP_VERSION", "0.0.1")
 
 
 app = Flask(__name__)
