@@ -69,9 +69,9 @@ jobs:
         id: bump-version-by-commit
         uses: bitshifted/git-auto-semver@v2.0.11
         with:
+          main_branch: improve
           create_tag: true
           initial_version: 0.0.0
-          manual_bump: minor
         if: steps.filter.outputs.app == 'true'
 
       - name: set image tag
