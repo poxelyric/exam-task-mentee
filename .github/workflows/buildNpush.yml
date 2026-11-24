@@ -53,8 +53,8 @@ jobs:
             app:
               - 'app/**'
 
-      - name: bump minor version if only dockerfile changed
-        id: bump-version-minor
+      - name: bump patch version if only dockerfile changed
+        id: bump-version-patch
         uses: bitshifted/git-auto-semver@v2.0.11
         with:
           main_branch: improve
@@ -65,7 +65,7 @@ jobs:
 
       - name: set image tag
         run: |
-          echo "TAG=${{ steps.bump-version-minor.outputs.version-string }}" >> $GITHUB_ENV
+          echo "TAG=${{ steps.bump-version-patch.outputs.version-string }}" >> $GITHUB_ENV
         if: steps.filter.outputs.app == 'false'
       
       - name: Bump version and push tag if app changed
