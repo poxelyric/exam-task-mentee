@@ -19,7 +19,7 @@ variable "cluster_name" {
 variable "image" {
   description = "Name used for the ECS cluster, service, and task."
   type        = string
-  default     = "094032936054.dkr.ecr.eu-north-1.amazonaws.com/orichen/exam:v1.2.3"
+  default     = "094032936054.dkr.ecr.eu-north-1.amazonaws.com/orichen/exam:1.2.3"
 }
 
 variable "container_port" {
