@@ -20,6 +20,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+          fetch-depth: 0
 
       # - name: oidc-debugger-action
       #   # You may pin to the exact commit or the version.
