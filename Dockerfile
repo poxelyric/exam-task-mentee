@@ -1,6 +1,7 @@
 FROM python:3.12-slim
 
 ARG APP_VERSION=0.0.1
+
 ENV APP_VERSION=${APP_VERSION}
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,9 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
     
 COPY requirements.txt ./
+
 RUN pip install --no-cache-dir --disable-pip-version-check -r requirements.txt
 
 COPY pyproject.toml ./
+
 COPY app/ ./app/
 
 WORKDIR /app
