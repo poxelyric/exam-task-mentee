@@ -60,7 +60,7 @@ jobs:
           main_branch: improve
           create_tag: true
           initial_version: 0.0.0
-          manual_bump: minor
+          manual_bump: patch
         if: steps.filter.outputs.app == 'false'
 
       - name: set image tag
