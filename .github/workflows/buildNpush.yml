@@ -40,40 +40,51 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
 
-      # - name: Check changed files
-      #   uses: dorny/paths-filter@v3
-      #   id: filter
-      #   with:
-      #     filters: |
-      #       docker:
-      #         - 'dockerfile'
-      #       app:
-      #         - 'app/**'
+      - name: Check changed files
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            docker:
+              - 'dockerfile'
+            app:
+              - 'app/**'
 
       - name: bump minor version if only dockerfile changed
-        id: bump-version
+        id: bump-version-minor
         uses: bitshifted/git-auto-semver@v2.0.11
         with:
           main_branch: improve
           create_tag: true
           initial_version: 0.0.0
-      #     manual_bump: minor
-      #   if: steps.filter.outputs.app == 'false'
+          manual_bump: minor
+        if: steps.filter.outputs.app == 'false'
+
+      - name: set image tag
+        run: |
+          echo "TAG=${{ steps.bump-version-minor.outputs.version-string }}" >> $GITHUB_ENV
+        if: steps.filter.outputs.app == 'false'
       
-      # - name: Bump version and push tag if app changed
-      #   uses: bitshifted/git-auto-semver@v2.0.11
-      #   with:
-      #     create_tag: true
-      #     initial_version: 0.0.0
-      #     manual_bump: minor
-      #   if: steps.filter.outputs.app == 'true'
+      - name: Bump version and push tag if app changed
+        id: bump-version-by-commit
+        uses: bitshifted/git-auto-semver@v2.0.11
+        with:
+          create_tag: true
+          initial_version: 0.0.0
+          manual_bump: minor
+        if: steps.filter.outputs.app == 'true'
+
+      - name: set image tag
+        run: |
+          echo "TAG=${{ steps.bump-version-by-commit.outputs.version-string }}" >> $GITHUB_ENV
+        if: steps.filter.outputs.app == 'true'
 
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ steps.bump-version.outputs.version-string }}
+          IMAGE_TAG: ${{ env.TAG }}
           ECR_REPOSITORY: ${{ vars.REPOSITORY }}
         run: |
           # Build a docker container and
@@ -82,23 +93,3 @@ jobs:
           docker build --build-arg APP_VERSION=$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  # tag:
-  #   name: tag
-  #   runs-on: ubuntu-latest
-    
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v6
-      
-  #     - uses: SebRollen/toml-action@v1.2.0
-  #       id: read_toml
-  #       with:
-  #         file: 'pyproject.toml'
-  #         field: 'project.version'
-      
-  #     - uses: rickstaa/action-create-tag@v1
-  #       id: "tag_create"
-  #       with:
-  #         tag: "v${{ steps.read_toml.outputs.value }}"
-  #         tag_exists_error: false
-  #         message: "${{ steps.read_toml.outputs.value }} version"
