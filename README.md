@@ -1,26 +1,21 @@
-# retospect
+### Decisions
 
-## What I planned
-Connect github actions aws using oidc
+**Decouple App from Infra**
 
-To deploy the app to aws I wanted to use terraform for IaC
+The most recent state of the terraform configuration in git should idealy always represent the state of the infrastructure. Decoupling app versioning from infra versioning makes it easier to roll back a version or develop on different environments.
 
-use s3 bucket as terraform backend
+The pipelines are seperated:
+* Deploy - Deploys terraform configuration on push to terraform folder. That way the state in git is the same as in aws (though there is no reconciliation loop, can use cron feature of action)
+* Build - Build and tag the commit on changes in app or dockerfile. If only the Dockerfile changes a patch bump is forced, otherwise the commit message determines bump.
 
-deploy the app on ecs for simplicity
+In the future it would be nice to use github environments to create a dev environment using the same pipelines. In that case automatically changing the "image" variable in terraform would be desired.
 
-In order to allow for rollback only changes to app code change the app version and the IaC can reference an older image tag.
+**Infra Architecture**
 
-perhaps seperate the workflows into deploy and build: build whenever an app change and deploy when app changes or terraform changes
+In this demo a terraform configuration creates ecs cluster, service and taskDefinition as well as VPC,subnets and general network configuration. In reality it would be expected that different teams may maintain different services on the same infrastructure. Some of this deployment like VPC might be in jurisdiction of a different team. Or if we were deploying to a k8s cluster a different team would maintain the cluster and give greenfield team some permissions in an ArgoCD instance.
 
-## What went wrong
+The containers are created in a private subnet and exposed to the world using an Application Load Balancer (ALB) on the public subnet. The LB is using http but it would be better if we issued a certificate using ACM and configured it to use tls termination.
 
-I underestimated the time it would take to write a terraform configuration and started lookng for simpler alternatives when I realized I don't have time.
-
-I wasn't able to do versioning in the pipline in time. If I had more time I think I would have the pyproject.toml be the source for the app versionion and decouple the infra version from the app version. This can be achieved with two tags, one for infra and one for app. A change to the infrastructure should bump
-the infra tag but not the app tag.
-
-## What I would do different
-I am more familiar with k8s than aws services. In retrospect maybe I should have created a terraform configuration to deploy
-an EKS cluster which I already have, configure an argoCD addon and deploy the app in the way I am familiar with.
-That would also allow me to decouple my IaC (eks with addon with terraform) from my CaC (argocd app definition).
+<p align="center">
+    <img src="docs/assets/landingpage.png" style="width:100%">
+</p>

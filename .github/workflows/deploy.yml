@@ -8,10 +8,9 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
-    # paths:
-    #   - 'app/**'
-    #   - 'terraform/**'
+      - improve
+    paths:
+      - 'terraform/**'
 jobs:
   deploy:
     name: Deploy
@@ -37,4 +36,4 @@ jobs:
       
       - run: terraform init
 
-      - run: terraform apply -auto-approve -input=false -var="aws_region=${{ vars.REGION }}" -var="container_port=8080"
+      - run: terraform apply -auto-approve -input=false -var="aws_region=${{ vars.REGION }}" -var="container_port=${{ vars.PORT }}"
