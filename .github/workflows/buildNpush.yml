@@ -12,6 +12,9 @@ on:
       - 'app/**'
       - 'Dockerfile'
 
+env:
+  head_branch: improve
+
 jobs:
   build:
     name: build
@@ -47,6 +50,7 @@ jobs:
         uses: dorny/paths-filter@v3
         id: filter
         with:
+          base: ${{ env.head_branch }}
           filters: |
             docker:
               - 'dockerfile'
@@ -57,7 +61,7 @@ jobs:
         id: bump-version-patch
         uses: bitshifted/git-auto-semver@v2.0.11
         with:
-          main_branch: improve
+          main_branch: ${{ env.head_branch }}
           create_tag: true
           initial_version: 0.0.0
           manual_bump: patch
@@ -72,7 +76,7 @@ jobs:
         id: bump-version-by-commit
         uses: bitshifted/git-auto-semver@v2.0.11
         with:
-          main_branch: improve
+          main_branch: ${{ env.head_branch }}
           create_tag: true
           initial_version: 0.0.0
         if: steps.filter.outputs.app == 'true'
